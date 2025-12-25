@@ -3,9 +3,9 @@ services:
     image: postgres:18-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: excdb
+      POSTGRES_USER: ${POSTGRESQL_USER}
+      POSTGRES_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRES_DB: ${POSTGRESQL_NAME}
     volumes:
       - ./pgdata:/var/lib/postgresql/data
     ports:
@@ -14,7 +14,7 @@ services:
   redis:
     image: redis:8.2-alpine
     restart: unless-stopped
-    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
     volumes:
       - ./redis-data:/data
     ports:
@@ -28,22 +28,8 @@ services:
     depends_on:
       - postgres
       - redis
-    environment:
-      POSTGRESQL_HOST: postgres
-      POSTGRESQL_PORT: 5432
-      POSTGRESQL_USER: postgres
-      POSTGRESQL_PASSWORD: postgres
-      POSTGRESQL_NAME: excdb
-      POSTGRESQL_SSL: disable
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_DB: 0
-      REDIS_PASSWORD:
-      SALT: "super-secret-salt-at-least-32-characters-long-0000"
-      SERVER_KEY: "super-secret-server-key-000000000000"
-      HOST: 0.0.0.0
-      PORT: 8000
-      ORIGIN: "http://localhost:8000"
+    env_file:
+      - .env
     volumes:
       - ./exchanges:/usr/src/app/exchanges:ro
       - ./logs:/usr/src/app/logs
