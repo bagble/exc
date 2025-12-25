@@ -1,0 +1,55 @@
+# Git
+.git
+.gitignore
+
+# Dependencies
+node_modules
+
+# Build outputs
+build
+.svelte-kit
+dist
+
+# Data directories
+pgdata
+redis-data
+logs
+drizzle
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+README.md
+readme.md
+LICENSE
+licence
+
+# Tests
+**/*.test.ts
+**/*.spec.ts
+**/__tests__
+**/__mocks__

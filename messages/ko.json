@@ -1,0 +1,14 @@
+{
+  "Root": {
+    "title": "EXC에 오신 것을 환영합니다"
+  },
+  "Chart": {
+    "symbol_ohlcv": "{symbol} {status}<strong> 시가: {open} | 고가: {high} | 저가: {low} | 종가: {close} |</strong> 거래량: {volume}",
+    "symbol_not_found": "{symbol}을(를) 찾을 수 없습니다",
+    "invalid_interval": "'{interval}'은/는 유효하지 않은 인터벌입니다.",
+    "symbol_suspended": "{symbol}은(는) '{reason}' 이유로 거래 정지되었습니다.",
+    "symbol_suspended_no_reason": "알 수 없음",
+    "loading_chart": "로딩중...",
+    "failed_to_load_chart": "차트를 불러오지 못했습니다."
+  }
+}

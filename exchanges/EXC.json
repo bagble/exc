@@ -1,0 +1,45 @@
+{
+  "name": "EXCHANGE",
+  "short_name": "EXC",
+  "country": "KR",
+  "default_currency": "KRW",
+  "default_UTC_offset": 9,
+  "default_timezone": "Asia/Seoul",
+  "default_fee_type": "percentage",
+  "default_fee": 0.25,
+  "available_types": [
+    "index",
+    "stock"
+  ],
+  "url": "https://example.com",
+  "logo": "https://example.com/logo.png",
+  "description": "EXCHANGE is a fictional stock exchange used for demonstration purposes.",
+  "pre_market_sessions": {
+    "Monday": { "open": "02:00", "close": "09:00" },
+    "Tuesday": { "open": "02:00", "close": "09:00" },
+    "Wednesday": { "open": "02:00", "close": "09:00" },
+    "Thursday": { "open": "02:00", "close": "09:00" },
+    "Friday": { "open": "00:00", "close": "09:00" },
+    "Saturday": { "open": "02:00", "close": "10:00" },
+    "Sunday": { "open": null, "close": null }
+  },
+  "regular_trading_sessions": {
+    "Monday": { "open": "09:00", "close": "15:30" },
+    "Tuesday": { "open": "09:00", "close": "15:30" },
+    "Wednesday": { "open": "09:00", "close": "15:30" },
+    "Thursday": { "open": "09:00", "close": "15:30" },
+    "Friday": { "open": "09:00", "close": "15:30" },
+    "Saturday": { "open": "10:00", "close": "14:00" },
+    "Sunday": { "open": null, "close": null }
+  },
+  "post_market_sessions": {
+    "Monday": { "open": "15:30", "close": "00:00" },
+    "Tuesday": { "open": "15:30", "close": "00:00" },
+    "Wednesday": { "open": "15:30", "close": "00:00" },
+    "Thursday": { "open": "15:30", "close": "00:00" },
+    "Friday": { "open": "15:30", "close": "00:00" },
+    "Saturday": { "open": "14:00", "close": "20:00" },
+    "Sunday": { "open": null, "close": null }
+  },
+  "anniversaries": []
+}

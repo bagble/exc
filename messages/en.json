@@ -1,0 +1,14 @@
+{
+  "Root": {
+    "title": "Welcome to EXC"
+  },
+  "Chart": {
+    "symbol_ohlcv": "{symbol} {status}<strong> o: {open} | h: {high} | l: {low} | c: {close} |</strong> v: {volume}",
+    "symbol_not_found": "{symbol} not found",
+    "invalid_interval": "Invalid interval: {interval}",
+    "symbol_suspended": "{symbol} is suspended due to '{reason}'",
+    "symbol_suspended_no_reason": "unknown",
+    "loading_chart": "Loading...",
+    "failed_to_load_chart": "Failed to load chart."
+  }
+}
