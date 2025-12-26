@@ -6,8 +6,7 @@ on:
     paths-ignore:
       - 'readme.md'
       - 'readme.*'
-      - 'docker-compose.yml'
-      - 'docker-compose.*'
+      - 'docker-compose*'
       - 'docs/**'
       - 'licence'
 

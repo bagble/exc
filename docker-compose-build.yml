@@ -8,8 +8,6 @@ services:
       POSTGRES_DB: ${POSTGRESQL_NAME}
     volumes:
       - ./pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
 
   redis:
     image: redis:8.2-alpine
@@ -17,8 +15,6 @@ services:
     command: ["redis-server", "--save", "60", "1", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
     volumes:
       - ./redis-data:/data
-    ports:
-      - "6379:6379"
     # Note: do not set vm.overcommit_memory here — some hosts do not allow per-container sysctls.
     # If needed on your host run: `sudo sysctl -w vm.overcommit_memory=1`
 
@@ -31,7 +27,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./exchanges:/usr/src/app/exchanges:ro
+      - ./exchanges:/usr/src/app/exchanges
       - ./logs:/usr/src/app/logs
     ports:
       - "8000:8000"

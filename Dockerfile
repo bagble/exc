@@ -1,4 +1,4 @@
-## Builder stage (Debian) - install build deps and build the app
+# Builder stage
 FROM node:20-bullseye-slim AS builder
 WORKDIR /usr/src/app
 
@@ -15,10 +15,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
   && rm -rf /var/lib/apt/lists/*
 
+# npm 캐시를 활용하여 속도 향상
 COPY package.json package-lock.json* ./
-RUN if [ -f package-lock.json ]; then npm ci --no-audit --prefer-offline; else npm install --no-audit --prefer-offline; fi
+RUN --mount=type=cache,target=/root/.npm \
+    if [ -f package-lock.json ]; then npm ci --no-audit --prefer-offline; \
+    else npm install --no-audit --prefer-offline; fi
 
-# Copy source and build
 COPY . .
 ## Provide safe build-time defaults for env vars referenced during build
 ENV POSTGRESQL_HOST=127.0.0.1
@@ -30,6 +32,7 @@ ENV POSTGRESQL_SSL=disable
 ENV SALT='super-secret-salt-at-least-32-characters-long-0000'
 ENV SERVER_KEY='super-secret-server-key-000000000000'
 
+ENV NODE_ENV=production
 RUN npm run prepare || true
 RUN npm run build
 
@@ -37,8 +40,12 @@ RUN npm run build
 FROM node:20-alpine AS runtime
 WORKDIR /usr/src/app
 
-# Minimal runtime packages and tools for drizzle / postgres client
-RUN apk add --no-cache ca-certificates libstdc++ postgresql-client python3
+RUN apk add --no-cache \
+    ca-certificates \
+    libstdc++ \
+    postgresql-client \
+    python3 \
+    su-exec
 
 # Copy package manifests to install production deps in alpine
 COPY --from=builder /usr/src/app/package.json ./
@@ -73,6 +80,7 @@ EXPOSE 8000
 # Ensure logs dir exists and writable
 RUN mkdir -p /usr/src/app/logs && chown -R node:node /usr/src/app/logs
 
-USER node
+# USER node 제거 - entrypoint에서 유저 전환 처리
+# USER node  <-- 이 줄 제거 또는 주석 처리
 
 ENTRYPOINT ["/usr/src/app/docker-entrypoint.sh"]
