@@ -1,4 +1,5 @@
 #!/bin/sh
+
 set -e
 
 # Root 권한으로 실행 중이면 볼륨 권한 수정 후 node 유저로 전환
@@ -22,11 +23,10 @@ if [ "$(id -u)" = "0" ]; then
   fi
   
   # /usr/src/app 권한 수정
-  echo "Fixing permissions for /usr/src/app"
-  chown -R node:node /usr/src/app 2>/dev/null || echo "Could not change ownership of /usr/src/app"
+  # echo "Fixing permissions for /usr/src/app"
+  # chown -R node:node /usr/src/app 2>/dev/null || echo "Could not change ownership of /usr/src/app"
   
   echo "Switching to node user with su-exec..."
-  
   # su-exec 확인 및 실행
   if command -v su-exec >/dev/null 2>&1; then
     exec su-exec node "$0" "$@"
@@ -46,7 +46,6 @@ DEFAULT_EXC_URL="https://raw.githubusercontent.com/bagble/runner/refs/heads/main
 if [ ! -f "$EXC_FILE" ]; then
   echo "EXC.json not found. Downloading from GitHub..."
   mkdir -p /usr/src/app/exchanges
-  
   EXC_URL="${EXC_CONFIG_URL:-$DEFAULT_EXC_URL}"
   
   if command -v wget >/dev/null 2>&1; then
@@ -77,6 +76,7 @@ done
 echo "Postgres is available. Preparing drizzle config..."
 CONFIG_PATH="${DRIZZLE_CONFIG_PATH:-/usr/src/app/drizzle.config.json}"
 CONFIG_DIR=$(dirname "$CONFIG_PATH")
+
 if [ ! -w "$CONFIG_DIR" ]; then
   echo "Config directory $CONFIG_DIR not writable; falling back to /tmp/drizzle.config.json"
   CONFIG_PATH="/tmp/drizzle.config.json"
@@ -87,25 +87,29 @@ if [ ! -f "$CONFIG_PATH" ]; then
   echo "Generating $CONFIG_PATH from environment variables..."
   ENC_PW=$(node -e "console.log(encodeURIComponent(process.env.POSTGRESQL_PASSWORD||''))")
   mkdir -p "$CONFIG_DIR"
-  cat > "$CONFIG_PATH" <<JSON
+  
+  cat > "$CONFIG_PATH" <<EOF
 {
-  "schema": "src/lib/server/postgresql/schemas.ts",
-  "out": "./drizzle",
   "dialect": "postgresql",
+  "schema": "./src/lib/server/postgresql/schemas.ts",
+  "out": "./drizzle",
   "dbCredentials": {
-    "url": "postgres://${POSTGRESQL_USER}:${ENC_PW}@${POSTGRESQL_HOST}:${POSTGRESQL_PORT}/${POSTGRESQL_NAME}?sslmode=${POSTGRESQL_SSL:-disable}"
-  },
-  "verbose": true,
-  "strict": true
+    "url": "postgresql://${POSTGRESQL_USER}:${ENC_PW}@${POSTGRESQL_HOST}:${POSTGRESQL_PORT}/${POSTGRESQL_NAME}?sslmode=${POSTGRESQL_SSL}"
+  }
 }
-JSON
+EOF
   echo "Created $CONFIG_PATH"
 fi
 
-echo "Running drizzle-kit push..."
-npx drizzle-kit push --force --config "$CONFIG_PATH" || {
-  echo "Warning: drizzle-kit push failed; continuing startup..."
-}
+# SKIP_MIGRATION 환경변수로 마이그레이션 제어
+if [ "${SKIP_MIGRATION:-false}" != "true" ]; then
+  echo "Running drizzle-kit push..."
+  if ! npx drizzle-kit push --config="$CONFIG_PATH"; then
+    echo "Warning: drizzle-kit push failed; continuing startup..."
+  fi
+else
+  echo "Skipping migration (SKIP_MIGRATION=true)"
+fi
 
 echo "Starting app..."
-exec node build/index.js
+exec "$@"
