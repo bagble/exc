@@ -1,5 +1,5 @@
 # Builder stage
-FROM node:20-alpine AS builder
+FROM node:25.2.1-alpine AS builder
 WORKDIR /usr/src/app
 
 RUN apk add --no-cache \
@@ -34,7 +34,7 @@ RUN npm run prepare || true
 RUN npm run build
 
 ## Runtime stage
-FROM node:20-alpine AS runtime
+FROM node:25.2.1-alpine AS runtime
 WORKDIR /usr/src/app
 
 RUN apk add --no-cache \
