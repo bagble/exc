@@ -2,6 +2,8 @@
 FROM node:25.2.1-alpine AS builder
 WORKDIR /usr/src/app
 
+RUN apk update && apk upgrade --no-cache
+
 RUN apk add --no-cache \
     ca-certificates \
     postgresql-client \
@@ -33,9 +35,15 @@ ENV NODE_ENV=production
 RUN npm run prepare || true
 RUN npm run build
 
-## Runtime stage
+# Migration stage
+FROM builder AS migration
+WORKDIR /usr/src/app
+CMD ["npx", "drizzle-kit", "push"]
+
 FROM node:25.2.1-alpine AS runtime
 WORKDIR /usr/src/app
+
+RUN apk update && apk upgrade --no-cache
 
 RUN apk add --no-cache \
     ca-certificates \
@@ -46,14 +54,12 @@ RUN apk add --no-cache \
 COPY --from=builder /usr/src/app/package.json ./
 COPY --from=builder /usr/src/app/package-lock.json ./
 
-# Install production deps
 RUN apk add --no-cache --virtual .build-deps make g++ gcc musl-dev openssl-dev python3 \
   && if [ -f package-lock.json ]; then npm ci --omit=dev --no-audit --no-fund; \
      else npm install --production --no-audit --no-fund; fi \
   && npm cache clean --force \
+  && rm -rf /tmp/* /root/.npm \
   && apk del .build-deps
-
-RUN npm install drizzle-kit@0.31.8 --save-prod
 
 COPY --from=builder --chown=node:node /usr/src/app/build ./build
 COPY --from=builder --chown=node:node /usr/src/app/docker-entrypoint.sh ./docker-entrypoint.sh

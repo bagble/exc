@@ -10,6 +10,11 @@ services:
       - ./pgdata:/var/lib/postgresql/data
     networks:
       - exc-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
 
   redis:
     image: redis:8.2-alpine
@@ -19,19 +24,66 @@ services:
       - ./redis-data:/data
     networks:
       - exc-network
-    # Note: do not set vm.overcommit_memory here — some hosts do not allow per-container sysctls.
-    # If needed on your host run: `sudo sysctl -w vm.overcommit_memory=1`
+
+  exc-migrate:
+    build:
+      context: .
+      target: migration
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - "com.docker.compose.oneoff=true"
+    networks:
+      - exc-network
+    restart: "no"
+    environment:
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_PORT: ${POSTGRESQL_PORT:-5432}
+      POSTGRESQL_USER: ${POSTGRESQL_USER}
+      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRESQL_NAME: ${POSTGRESQL_NAME}
+      POSTGRESQL_SSL: ${POSTGRESQL_SSL:-disable}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Waiting for Postgres..."
+        until pg_isready -h postgres -p 5432 -U ${POSTGRESQL_USER}; do sleep 1; done
+        
+        echo "Creating drizzle config..."
+        cat > /usr/src/app/drizzle.config.json <<EOF
+        {
+          "dialect": "postgresql",
+          "schema": "./src/lib/server/postgresql/schemas.ts",
+          "out": "./drizzle",
+          "dbCredentials": {
+            "url": "postgresql://${POSTGRESQL_USER}:${POSTGRESQL_PASSWORD}@postgres:5432/${POSTGRESQL_NAME}?sslmode=${POSTGRESQL_SSL}"
+          }
+        }
+        EOF
+        
+        echo "Running migration..."
+        npx drizzle-kit push --config=/usr/src/app/drizzle.config.json
+        echo "Migration complete!"
 
   exc:
-    build: .
+    build:
+      context: .
+      target: runtime
     restart: unless-stopped
     depends_on:
-      - postgres
-      - redis
+      exc-migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
     env_file:
       - .env
     environment:
-      SKIP_MIGRATION: "false"
+      SKIP_MIGRATION: "true"
     volumes:
       - ./exchanges:/usr/src/app/exchanges
       - ./logs:/usr/src/app/logs
