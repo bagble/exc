@@ -73,43 +73,5 @@ until pg_isready -h "${POSTGRESQL_HOST:-postgres}" -p "${POSTGRESQL_PORT:-5432}"
   sleep 1
 done
 
-echo "Postgres is available. Preparing drizzle config..."
-CONFIG_PATH="${DRIZZLE_CONFIG_PATH:-/usr/src/app/drizzle.config.json}"
-CONFIG_DIR=$(dirname "$CONFIG_PATH")
-
-if [ ! -w "$CONFIG_DIR" ]; then
-  echo "Config directory $CONFIG_DIR not writable; falling back to /tmp/drizzle.config.json"
-  CONFIG_PATH="/tmp/drizzle.config.json"
-  CONFIG_DIR="/tmp"
-fi
-
-if [ ! -f "$CONFIG_PATH" ]; then
-  echo "Generating $CONFIG_PATH from environment variables..."
-  ENC_PW=$(node -e "console.log(encodeURIComponent(process.env.POSTGRESQL_PASSWORD||''))")
-  mkdir -p "$CONFIG_DIR"
-  
-  cat > "$CONFIG_PATH" <<EOF
-{
-  "dialect": "postgresql",
-  "schema": "./src/lib/server/postgresql/schemas.ts",
-  "out": "./drizzle",
-  "dbCredentials": {
-    "url": "postgresql://${POSTGRESQL_USER}:${ENC_PW}@${POSTGRESQL_HOST}:${POSTGRESQL_PORT}/${POSTGRESQL_NAME}?sslmode=${POSTGRESQL_SSL}"
-  }
-}
-EOF
-  echo "Created $CONFIG_PATH"
-fi
-
-# SKIP_MIGRATION 환경변수로 마이그레이션 제어
-if [ "${SKIP_MIGRATION:-false}" != "true" ]; then
-  echo "Running drizzle-kit push..."
-  if ! npx drizzle-kit push --config="$CONFIG_PATH"; then
-    echo "Warning: drizzle-kit push failed; continuing startup..."
-  fi
-else
-  echo "Skipping migration (SKIP_MIGRATION=true)"
-fi
-
-echo "Starting app..."
+echo "Postgres is available. Starting app..."
 exec "$@"

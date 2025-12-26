@@ -1,6 +1,6 @@
 import type { Handle, ServerInit } from '@sveltejs/kit';
 import { paraglideMiddleware } from '$lib/paraglide/server';
-import { initPostgres } from "$lib/server/postgresql/db";
+import { initPostgres, runMigrations } from "$lib/server/postgresql/db";
 import { initRedis } from "$lib/server/redis/db";
 import { sequence } from "@sveltejs/kit/hooks";
 import { Cron } from "croner";
@@ -26,6 +26,7 @@ export const init: ServerInit = async () => {
 
     await initPostgres();
     await initRedis();
+    await runMigrations();
 
     if (!newLoad) {
         newLoad = true;

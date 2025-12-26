@@ -1,4 +1,3 @@
-# Builder stage
 FROM node:25.2.1-alpine AS builder
 WORKDIR /usr/src/app
 
@@ -33,12 +32,8 @@ ENV SERVER_KEY='super-secret-server-key-000000000000'
 
 ENV NODE_ENV=production
 RUN npm run prepare || true
+RUN npm run drizzle:generate
 RUN npm run build
-
-# Migration stage
-FROM builder AS migration
-WORKDIR /usr/src/app
-CMD ["npx", "drizzle-kit", "push"]
 
 FROM node:25.2.1-alpine AS runtime
 WORKDIR /usr/src/app
@@ -65,7 +60,7 @@ COPY --from=builder --chown=node:node /usr/src/app/build ./build
 COPY --from=builder --chown=node:node /usr/src/app/docker-entrypoint.sh ./docker-entrypoint.sh
 COPY --from=builder --chown=node:node /usr/src/app/.env.example ./.env.example
 COPY --from=builder --chown=node:node /usr/src/app/exchanges ./exchanges
-COPY --from=builder --chown=node:node /usr/src/app/src/lib/server/postgresql ./src/lib/server/postgresql
+COPY --from=builder --chown=node:node /usr/src/app/drizzle ./drizzle
 
 RUN chmod +x /usr/src/app/docker-entrypoint.sh
 
